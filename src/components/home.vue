@@ -12,7 +12,7 @@ except according to the terms contained in the LICENSE file.
 <template>
   <div>
     <div id="home-heading">{{ $t('heading[0]') }}</div>
-    <home-summary/>
+    <!-- <home-summary/> -->
     <page-body>
       <!-- <div id="home-news-container">
         <home-news/>
