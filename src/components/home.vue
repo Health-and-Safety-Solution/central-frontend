@@ -14,11 +14,11 @@ except according to the terms contained in the LICENSE file.
     <div id="home-heading">{{ $t('heading[0]') }}</div>
     <home-summary/>
     <page-body>
-      <div id="home-news-container">
+      <!-- <div id="home-news-container">
         <home-news/>
         <home-config-section v-if="config.home.title != null"
           :title="config.home.title" :body="config.home.body"/>
-      </div>
+      </div> -->
       <project-list/>
     </page-body>
   </div>
