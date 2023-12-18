@@ -22,7 +22,7 @@ except according to the terms contained in the LICENSE file.
             <span class="navbar-icon-bar"></span>
             <span class="navbar-icon-bar"></span>
           </button>
-          <router-link to="/" class="navbar-brand">ODK Central</router-link>
+          <router-link to="/" class="navbar-brand">Acorn Central</router-link>
         </div>
         <div class="collapse navbar-collapse">
           <navbar-links v-if="loggedIn"/>
@@ -190,7 +190,7 @@ $border-height: 3px;
         box-shadow: 0 0 6px transparentize($color-accent-secondary, 0.7) inset;
 
         &, &:hover, &:focus {
-          background-color: #b40066;
+          background-color: #bf6600;
           border-top-color: #fff;
           color: #fff;
         }
