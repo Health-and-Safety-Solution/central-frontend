@@ -9,30 +9,41 @@ https://www.apache.org/licenses/LICENSE-2.0. No part of ODK Central,
 including this file, may be copied, modified, propagated, or distributed
 except according to the terms contained in the LICENSE file.
 -->
-
 <template>
   <div>
     <page-section>
       <template #heading>
         <span>{{ $t('resource.entities') }}</span>
-        <odata-data-access @analyze="showModal('analyze')"/>
+        <button v-if="project.dataExists && project.permits('entity.create')"
+          id="dataset-entities-upload-button" type="button"
+          class="btn btn-primary" @click="upload.show()">
+          <span class="icon-upload"></span>{{ $t('action.upload') }}
+        </button>
+        <odata-data-access @analyze="analyze.show()"/>
       </template>
       <template #body>
         <entity-list :project-id="projectId" :dataset-name="datasetName"/>
       </template>
     </page-section>
-    <odata-analyze v-bind="analyze" :odata-url="odataUrl" @hide="hideModal('analyze')"/>
+
+    <entity-upload v-if="dataset.dataExists" v-bind="upload"
+      @hide="upload.hide()" @success="afterUpload"/>
+    <odata-analyze v-bind="analyze" :odata-url="odataUrl" @hide="analyze.hide()"/>
   </div>
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
+
+import EntityList from '../entity/list.vue';
 import OdataAnalyze from '../odata/analyze.vue';
 import OdataDataAccess from '../odata/data-access.vue';
-import EntityList from '../entity/list.vue';
 import PageSection from '../page/section.vue';
 
-import modal from '../../mixins/modal';
 import { apiPaths } from '../../util/request';
+import { loadAsync } from '../../util/load-async';
+import { modalData } from '../../util/reactivity';
+import { useRequestData } from '../../request-data';
 
 export default {
   name: 'DatasetEntities',
@@ -40,9 +51,10 @@ export default {
     OdataAnalyze,
     OdataDataAccess,
     EntityList,
+    EntityUpload: defineAsyncComponent(loadAsync('EntityUpload')),
     PageSection
   },
-  mixins: [modal()],
+  inject: ['alert'],
   props: {
     projectId: {
       type: String,
@@ -53,17 +65,26 @@ export default {
       required: true
     }
   },
+  setup() {
+    const { project, dataset } = useRequestData();
+    return { project, dataset };
+  },
   data() {
     return {
-      analyze: {
-        state: false
-      }
+      upload: modalData('EntityUpload'),
+      analyze: modalData()
     };
   },
   computed: {
     odataUrl() {
       const path = apiPaths.odataEntitiesSvc(this.projectId, this.datasetName);
       return `${window.location.origin}${path}`;
+    }
+  },
+  methods: {
+    afterUpload() {
+      this.upload.hide();
+      this.alert.success('Entities were imported successfully! [TODO: i18n]');
     }
   }
 };

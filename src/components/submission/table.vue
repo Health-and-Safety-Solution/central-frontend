@@ -10,10 +10,11 @@ including this file, may be copied, modified, propagated, or distributed
 except according to the terms contained in the LICENSE file.
 -->
 <template>
-  <table-freeze id="submission-table" ref="table" :data="chunkyOData"
-    key-prop="__id" :frozen-only="fields == null" divider @action="review">
+  <table-freeze v-if="project.dataExists" id="submission-table" ref="table"
+    :data="chunkyOData" key-prop="__id" :frozen-only="fields == null" divider
+    @action="review">
     <template #head-frozen>
-      <th><!-- Row number --></th>
+      <th><span class="sr-only">{{ $t('common.rowNumber') }}</span></th>
       <th v-if="!draft">{{ $t('header.submitterName') }}</th>
       <th>{{ $t('header.submissionDate') }}</th>
       <th v-if="!draft">{{ $t('header.stateAndActions') }}</th>

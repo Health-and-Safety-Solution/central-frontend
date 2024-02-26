@@ -576,6 +576,14 @@ tr.uncommitted-change { background-color: #ffef67; }
   }
 }
 
+.row-number {
+  color: #999;
+  font-size: 11px;
+  padding-top: 11px;
+  text-align: right;
+  vertical-align: middle;
+}
+
 .empty-table-message {
   color: #555;
   font-size: 15px;
@@ -842,7 +850,15 @@ becomes more complicated.
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// markRowsChanged()
+// markRowsChanged(), markRowsDeleted()
 
-[data-mark-rows-changed="false"] { transition: background-color 0.6s 6s; }
 [data-mark-rows-changed="true"] { background-color: #faf1cd; }
+[data-mark-rows-changed="false"] { transition: background-color 0.6s 6s; }
+
+[data-mark-rows-deleted="true"] {
+  opacity: 0;
+  // If these numbers change, then markRowsDeleted() will need to change as
+  // well.
+  transition: opacity 0.6s 0.15s;
+}
+[data-mark-rows-deleted="false"] { display: none; }

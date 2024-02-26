@@ -23,10 +23,10 @@ except according to the terms contained in the LICENSE file.
       </form>
       <entity-download-button :odata-filter="odataFilter"/>
     </div>
-    <entity-table v-show="odataEntities.dataExists && odataEntities.value.length !== 0"
-      ref="table" :properties="dataset.properties" @update="showUpdate" @resolve="showResolve"/>
-    <p v-show="odataEntities.dataExists && odataEntities.value.length === 0"
-      class="empty-table-message">
+    <entity-table v-show="showsTable" ref="table"
+      :properties="dataset.properties" @update="showUpdate"
+      @resolve="showResolve" @delete="showDelete"/>
+    <p v-show="showsEmptyMessage" class="empty-table-message">
       {{ odataFilter == null ? $t('noEntities') : $t('noMatching') }}
     </p>
     <odata-loading-message type="entity"
@@ -35,14 +35,18 @@ except according to the terms contained in the LICENSE file.
       :filter="odataFilter != null"
       :refreshing="refreshing"
       :total-count="dataset.dataExists ? dataset.entities : 0"/>
+
     <entity-update v-bind="update" @hide="hideUpdate" @success="afterUpdate"/>
     <entity-resolve v-bind="resolve" @hide="hideResolve" @success="afterResolve"/>
+    <entity-delete v-bind="del" @hide="hideDelete"
+      @delete="requestDelete(uuidToDelete, del.label, $event)"/>
   </div>
 </template>
 
 <script>
 import { watchEffect } from 'vue';
 
+import EntityDelete from './delete.vue';
 import EntityDownloadButton from './download-button.vue';
 import EntityFilters from './filters.vue';
 import EntityTable from './table.vue';
@@ -51,16 +55,18 @@ import EntityResolve from './resolve.vue';
 import OdataLoadingMessage from '../odata-loading-message.vue';
 import Spinner from '../spinner.vue';
 
-import modal from '../../mixins/modal';
 import useEntities from '../../request-data/entities';
 import useQueryRef from '../../composables/query-ref';
-import { useRequestData } from '../../request-data';
+import useRequest from '../../composables/request';
 import { apiPaths } from '../../util/request';
+import { modalData } from '../../util/reactivity';
 import { noop } from '../../util/util';
+import { useRequestData } from '../../request-data';
 
 export default {
   name: 'EntityList',
   components: {
+    EntityDelete,
     EntityDownloadButton,
     EntityFilters,
     EntityTable,
@@ -69,7 +75,6 @@ export default {
     Spinner,
     EntityResolve
   },
-  mixins: [modal()],
   inject: ['alert'],
   provide() {
     return { projectId: this.projectId, datasetName: this.datasetName };
@@ -113,25 +118,25 @@ export default {
       })
     });
 
-    return { dataset, odataEntities, conflict };
+    const { request } = useRequest();
+
+    return { dataset, odataEntities, conflict, request };
   },
   data() {
     return {
       refreshing: false,
+
       // The index of the entity being updated
       updateIndex: null,
-      // Data to pass to the update modal
-      update: {
-        state: false,
-        entity: null
-      },
+      update: modalData(),
+
       // The index of the entity being resolved
       resolveIndex: null,
-      // Data to pass to the resolve modal
-      resolve: {
-        state: false,
-        entity: null
-      }
+      resolve: modalData(),
+
+      confirmDelete: true,
+      uuidToDelete: null,
+      del: modalData()
     };
   },
   computed: {
@@ -139,6 +144,19 @@ export default {
       return this.conflict.length === 2
         ? null
         : (this.conflict[0] ? '__system/conflict ne null' : '__system/conflict eq null');
+    },
+    showsTable() {
+      if (!this.odataEntities.dataExists) return false;
+      const { length } = this.odataEntities.value;
+      return length !== 0 && length !== this.odataEntities.deletedCount;
+    },
+    showsEmptyMessage() {
+      // If there are more entities to fetch, then we don't show the message
+      // even if all entities on the page are deleted. That case is pretty
+      // unlikely though, because the user would have had to delete 250+
+      // entities.
+      return this.odataEntities.dataExists && !this.showsTable &&
+        this.odataEntities.nextLink == null;
     }
   },
   watch: {
@@ -192,15 +210,15 @@ export default {
       const data = Object.create(null);
       for (const { name, odataName } of this.dataset.properties)
         data[name] = odataEntity[odataName];
-      this.update.entity = {
-        uuid: odataEntity.__id,
-        currentVersion: { label: odataEntity.label, version: odataEntity.__system.version, data }
-      };
-      this.showModal('update');
+      this.update.show({
+        entity: {
+          uuid: odataEntity.__id,
+          currentVersion: { label: odataEntity.label, version: odataEntity.__system.version, data }
+        }
+      });
     },
     hideUpdate() {
-      this.hideModal('update');
-      this.update.entity = null;
+      this.update.hide();
       this.updateIndex = null;
       if (this.resolveIndex != null) {
         this.showResolve(this.resolveIndex);
@@ -236,16 +254,14 @@ export default {
     showResolve(index) {
       if (this.refreshing) return;
       this.resolveIndex = index;
-      const odataEntity = this.odataEntities.value[index];
-      this.resolve.entity = odataEntity;
-      this.showModal('resolve');
+      this.resolve.show({ entity: this.odataEntities.value[index] });
     },
     hideResolve(showUpdate) {
-      this.hideModal('resolve');
       if (showUpdate) {
+        this.resolve.hide(false);
         this.$nextTick(() => this.showUpdate(this.resolveIndex));
       } else {
-        this.resolve.entity = null;
+        this.resolve.hide();
         this.resolveIndex = null;
       }
     },
@@ -261,6 +277,49 @@ export default {
       this.odataEntities.value[this.resolveIndex] = newOData;
 
       this.$refs.table.afterUpdate(this.resolveIndex);
+    },
+    showDelete(index) {
+      const entity = this.odataEntities.value[index];
+      if (this.confirmDelete) {
+        this.uuidToDelete = entity.__id;
+        this.del.show({ label: entity.label });
+      } else {
+        this.requestDelete(entity.__id, entity.label);
+      }
+    },
+    hideDelete() {
+      this.del.hide();
+      this.uuidToDelete = null;
+    },
+    requestDelete(uuid, label, confirm = undefined) {
+      if (this.del.state) this.del.awaitingResponse = true;
+      this.request({
+        method: 'DELETE',
+        url: apiPaths.entity(this.projectId, this.datasetName, uuid)
+      })
+        .then(() => {
+          this.hideDelete();
+          this.alert.success(this.$t('alert.delete', { label }));
+          if (confirm != null) this.confirmDelete = confirm;
+
+          /* Before doing a couple more things, we first determine whether
+          this.odataEntities.value still includes the entity and if so, what the
+          current index of the entity is. If a request to refresh
+          this.odataEntities was sent while the deletion request was in
+          progress, then there could be a race condition such that data doesn't
+          exist for this.odataEntities, or this.odataEntities.value no longer
+          includes the entity. Another possible result of the race condition is
+          that this.odataEntities.value still includes the entity, but the
+          entity's index has changed. */
+          const index = this.odataEntities.dataExists
+            ? this.odataEntities.value.findIndex(entity => entity.__id === uuid)
+            : -1;
+          if (index !== -1) {
+            this.odataEntities.countDeletion();
+            this.$refs.table.afterDelete(index);
+          }
+        })
+        .catch(() => { this.del.awaitingResponse = false; });
     },
     scrolledToBottom() {
       // Using pageYOffset rather than scrollY in order to support IE.
@@ -304,13 +363,16 @@ export default {
 </style>
 
 <i18n lang="json5">
-  {
-    "en": {
-      // This text is shown when there are no Entities to show in a table.
-      "noEntities": "There are no Entities to show.",
-      "noMatching": "There are no matching Entities."
+{
+  "en": {
+    // This text is shown when there are no Entities to show in a table.
+    "noEntities": "There are no Entities to show.",
+    "noMatching": "There are no matching Entities.",
+    "alert": {
+      "delete": "Entity “{label}” has been deleted."
     }
   }
+}
 </i18n>
 
 <!-- Autogenerated by destructure.js -->

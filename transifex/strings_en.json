@@ -317,6 +317,10 @@
       "string": "New",
       "developer_comment": "This is the text of a button that is used to fill out a new Submission. It is shown next to a heading whose text is \"Submissions\"."
     },
+    "delete": {
+      "string": "Delete",
+      "developer_comment": "This is the text for an action, for example, the text of a button."
+    },
     "done": {
       "string": "Done",
       "developer_comment": "This is the text for an action, for example, the text of a button."
@@ -824,9 +828,16 @@
       "string": "No results",
       "developer_comment": "This is shown if a search returned no results."
     },
+    "noUndo": {
+      "string": "This action cannot be undone."
+    },
     "rightNow": {
       "string": "Right Now",
       "developer_comment": "This is the title of a section that shows status information for the entire server such as project count."
+    },
+    "rowNumber": {
+      "string": "Row",
+      "developer_comment": "This is shown for the row number."
     },
     "success": {
       "string": "Success!"
@@ -1605,6 +1616,24 @@
         "developer_comment": "This is a title shown above a section of the page."
       }
     },
+    "EntityDelete": {
+      "title": {
+        "string": "Delete {label}",
+        "developer_comment": "This is the title at the top of a pop-up. {label} is the label of an Entity."
+      },
+      "introduction": {
+        "0": {
+          "string": "Are you sure you want to delete “{label}”?",
+          "developer_comment": "{label} is the label of an Entity."
+        }
+      },
+      "field": {
+        "noConfirm": {
+          "string": "Don’t ask again for now",
+          "developer_comment": "This is the text of a form field."
+        }
+      }
+    },
     "EntityDiff": {
       "noChange": {
         "string": "There are no changes to show."
@@ -1764,6 +1793,11 @@
       "noMatching": {
         "string": "There are no matching Entities."
       },
+      "alert": {
+        "delete": {
+          "string": "Entity “{label}” has been deleted."
+        }
+      },
       "action": {
         "download": {
           "unfiltered": {
@@ -1872,6 +1906,33 @@
       "problem": {
         "409_15": {
           "string": "Data has been modified by another user. Please refresh to see the updated data."
+        }
+      }
+    },
+    "EntityUpload": {
+      "title": {
+        "string": "Import Data from File",
+        "developer_comment": "This is the title at the top of a pop-up."
+      },
+      "headersNote": {
+        "string": "The first row in your data file must exactly match the table header you see above."
+      },
+      "action": {
+        "append": {
+          "string": "Append data",
+          "developer_comment": "This is the text for an action, for example, the text of a button."
+        }
+      }
+    },
+    "EntityUploadDataTemplate": {
+      "text": {
+        "full": {
+          "string": "If you aren’t sure, you can {downloadTemplate}",
+          "developer_comment": "{downloadTemplate} is a separate string that will be translated below. Its text will be formatted within ODK Central, for example, it might be bold or a link. Its text is:\n\nDownload a data template (.csv)"
+        },
+        "downloadTemplate": {
+          "string": "Download a data template (.csv)",
+          "developer_comment": "This text will be formatted within ODK Central, for example, it might be bold or a link. It will be inserted where {downloadTemplate} is in the following text:\n\nIf you aren’t sure, you can {downloadTemplate}"
         }
       }
     },
@@ -2063,9 +2124,6 @@
         },
         "1": {
           "string": "Existing Submissions from this user will remain, but anybody relying on this user will have to create a new one to continue downloading Forms or uploading Submissions."
-        },
-        "2": {
-          "string": "This action cannot be undone."
         }
       }
     },
@@ -2722,12 +2780,12 @@
         }
       },
       "action": {
-        "upload": {
-          "string": "Upload",
-          "developer_comment": "This is the text for an action, for example, the text of a button."
-        },
         "uploadAnyway": {
           "string": "Upload anyway",
+          "developer_comment": "This is the text for an action, for example, the text of a button."
+        },
+        "upload": {
+          "string": "Upload",
           "developer_comment": "This is the text for an action, for example, the text of a button."
         }
       },

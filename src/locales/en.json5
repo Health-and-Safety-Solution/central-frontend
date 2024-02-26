@@ -172,6 +172,7 @@
     // This is the text of a button that is used to fill out a new Submission.
     // It is shown next to a heading whose text is "Submissions".
     "createSubmission": "New",
+    "delete": "Delete",
     "done": "Done",
     "download": "Download",
     "edit": "Edit",
@@ -194,6 +195,8 @@
     // This text is shown next to a dropdown menu or other way to change the sorting of Projects or Forms
     "sort": "Sort",
     "update": "Update",
+    // @transifexKey component.FormNew.action.upload
+    "upload": "Upload",
     "yesProceed": "Yes, proceed",
     // This text is shown on a button that the user clicks to show a preview of something
     "showPreview": "Preview",
@@ -377,8 +380,11 @@
     "no": "No",
     // This is shown if a search returned no results.
     "noResults": "No results",
+    "noUndo": "This action cannot be undone.",
     // This is the title of a section that shows status information for the entire server such as project count.
     "rightNow": "Right Now",
+    // This is shown for the row number.
+    "rowNumber": "Row",
     // @transifexKey formHead.draftNav.tab.status
     "status": "Status",
     "success": "Success!",
